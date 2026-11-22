@@ -14,14 +14,6 @@ import { dirname, join, relative } from "node:path";
 import process from "node:process";
 import { runCommand } from "./spawn-command.mjs";
 
-// Windows PowerShell 5.1 的固定安装路径（随操作系统附带）。GitHub CI 镜像等环境下
-// `powershell.exe` 会被 PATH 里的 PowerShell 7 抢先解析，而 PS7 捆绑的
-// Microsoft.PowerShell.Archive 存在 `ExtractToDirectory` 重载缺失 bug
-// （MethodException，非终止性错误 → 进程仍退出 0 但什么都不解压）。
-// 5.1 的 Expand-Archive 是本脚本的预期运行环境，优先按绝对路径调用。
-const WINDOWS_POWERSHELL_51_PATH =
-  "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe";
-
 // Bugfix: Windows GNU tar（Git Bash）会把绝对路径里的盘符冒号（C:）当成远程主机名，
 // 反斜杠路径也会被 MSYS 参数转换破坏。tar 参数统一转正斜杠，归档路径优先改用
 // 相对 cwd 的形式避开盘符冒号；对 bsdtar 与 Linux/macOS CI 无影响。
@@ -48,14 +40,16 @@ export function extractPrebuiltArchive({ archivePath, archiveExt, extractDir, cw
   mkdirSync(extractDir, { recursive: true });
   if (archiveExt === "zip") {
     if (process.platform === "win32") {
-      runCommand(existsSync(WINDOWS_POWERSHELL_51_PATH) ? WINDOWS_POWERSHELL_51_PATH : "powershell.exe", [
-        "-NoProfile",
-        "-NonInteractive",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-Command",
-        `Expand-Archive -LiteralPath '${archivePath.replaceAll("'", "''")}' -DestinationPath '${extractDir.replaceAll("'", "''")}' -Force`,
-      ]);
+      // Windows 10 1803+/Server 2019+ 自带 bsdtar（System32\tar.exe），原生支持 zip。
+      // 不用 powershell.exe：GitHub CI 镜像把 powershell.exe（含 v1.0 绝对路径）都
+      // 指向 PowerShell 7，其捆绑的 Microsoft.PowerShell.Archive 存在 ExtractToDirectory
+      // 重载缺失 bug（MethodException，非终止性错误 → 退出码 0 但无任何解压产物）。
+      // bsdtar 行为跨机器确定，归档仍先经 SHA-256 验真。
+      const windowsBsdtarPath = "C:\\Windows\\System32\\tar.exe";
+      runCommand(
+        existsSync(windowsBsdtarPath) ? windowsBsdtarPath : "tar",
+        ["-xf", archivePath, "-C", extractDir],
+      );
       return;
     }
 
