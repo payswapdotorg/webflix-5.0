@@ -30,6 +30,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # GitHub 镜像里 powershell.exe 解析到 PowerShell 7，其 Expand-Archive 存在
+      # "ExtractToDirectory overload count 3" 的 MethodException（非终止性错误 →
+      # 退出码仍为 0、什么都不解压 → 随后 "Failed to locate ugrep.exe"）。
+      # 仓库脚本（prebuilt-binary-extract.mjs 等）按 Windows PowerShell 5.1 编写，
+      # 这里把 5.1 目录前置到 PATH，恢复其预期解析。
+      - name: Prefer Windows PowerShell 5.1 over PowerShell 7
+        shell: bash
+        run: echo 'C:\Windows\System32\WindowsPowerShell\v1.0' >> "$GITHUB_PATH"
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
