@@ -104,7 +104,7 @@ jobs:
             gh release create "$TAG" \
               --target "$GITHUB_SHA" \
               --title "WebFlix 5.0 — Windows 安装包 (ZCode 3.18.2 + WebFlix workspace)" \
-              --notes "Windows x64 installer built by the windows-installer workflow on windows-latest.
+              --notes "Windows x64 installer built by the windows-installer workflow on a windows-2022 runner.
 
           - **Source**: commit ${GITHUB_SHA} on main — ZCode v3.18.2 base + WebFlix video workspace plugin
           - **Toolchain**: Node.js 24.14.0 / pnpm 10.33.2 / electron-builder (NSIS target, x64)
