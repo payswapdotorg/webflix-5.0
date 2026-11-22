@@ -1,0 +1,103 @@
+name: Windows Installer
+
+# 构建 Windows x64 安装包（NSIS）并发布到 GitHub Releases。
+# 入口：Actions 页面手动触发（Run workflow），可自定义 Release 标签。
+# 完全增量：不改动主应用任何内容，只消费 pnpm bootstrap / bundle:desktop 的标准入口。
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "GitHub Release 标签（Release 不存在时会自动创建并指向当前 main HEAD）"
+        required: false
+        default: "v5.0.0"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-installer-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and publish Windows x64 installer
+    runs-on: windows-latest
+    timeout-minutes: 240
+    env:
+      # 恢复官方 Electron 下载源：仓库默认走 npmmirror（本地国内网络优化），
+      # GitHub runner 上官方源更快更稳。需要时删除此变量即可回退默认。
+      ELECTRON_MIRROR: "https://github.com/electron/electron/releases/download/v"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.14.0
+          cache: pnpm
+
+      - name: Bootstrap workspace (install + runtime assets + build)
+        run: pnpm bootstrap
+
+      - name: Build Windows x64 installer (NSIS)
+        run: pnpm bundle:desktop -- --os win --arch x64
+
+      - name: List dist artifacts
+        shell: bash
+        run: ls -la packages/desktop/dist
+
+      - name: Generate SHA256 checksums
+        shell: bash
+        run: |
+          cd packages/desktop/dist
+          sha256sum *.exe *.blockmap > SHA256SUMS.txt 2>/dev/null || true
+          cat SHA256SUMS.txt
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64-installer
+          path: |
+            packages/desktop/dist/*.exe
+            packages/desktop/dist/*.blockmap
+            packages/desktop/dist/latest*.yml
+            packages/desktop/dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish to GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag || 'v5.0.0' }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          assets=(packages/desktop/dist/*.exe packages/desktop/dist/*.blockmap packages/desktop/dist/latest*.yml packages/desktop/dist/SHA256SUMS.txt)
+          if [ ${#assets[@]} -eq 0 ]; then
+            echo "::error::No installer artifacts found in packages/desktop/dist"
+            exit 1
+          fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG exists — uploading assets (clobber)."
+          else
+            gh release create "$TAG" \
+              --target "$GITHUB_SHA" \
+              --title "WebFlix 5.0 — Windows 安装包 (ZCode 3.18.2 + WebFlix workspace)" \
+              --notes "Windows x64 installer built by the windows-installer workflow on windows-latest.
+
+          - **Source**: commit ${GITHUB_SHA} on main — ZCode v3.18.2 base + WebFlix video workspace plugin
+          - **Toolchain**: Node.js 24.14.0 / pnpm 10.33.2 / electron-builder (NSIS target, x64)
+          - **Unsigned build**: 首次运行如遇 SmartScreen 拦截，请选择 More info → Run anyway
+          - **Integrity**: 见 SHA256SUMS.txt"
+          fi
+          gh release upload "$TAG" "${assets[@]}" --clobber
+          echo "Published assets:"
+          gh release view "$TAG" --json assets --jq '.assets[].name'
