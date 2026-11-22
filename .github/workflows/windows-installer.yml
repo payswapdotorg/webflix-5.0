@@ -26,6 +26,12 @@ jobs:
     # 而 scripts/build-windows-runtime-host.mjs 硬编码 CMake "Visual Studio 17 2022" 生成器。
     runs-on: windows-2022
     timeout-minutes: 240
+    env:
+      # 后端环境与产品身份：ZCODE_ENV 未设置时按 test 处理，产物会带 _TEST 后缀并使用
+      # ZCode.Preview 身份（desktop-product-identity.mjs）。这里固定生产后端 →
+      # 正式 ZCode 身份 + 干净文件名 ZCode-<version>-win-x64.exe。
+      # 签名由 ZCODE_ENABLE_WINDOWS_SIGN 单独控制，保持未签名（无 secrets）。
+      ZCODE_ENV: production
     steps:
       - name: Checkout
         uses: actions/checkout@v4
