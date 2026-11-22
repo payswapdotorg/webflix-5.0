@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>WebFlix</title>
+    <style>
+      /*
+       * WebFlix panel — the WebFlix 2.0 interface (YouTube-clone baseline) rendered inside the
+       * ZCode workspace surface. Theme tokens are ported verbatim from WebFlix 2.0's
+       * src/app/globals.css (dark default, light toggle). Layout values mirror the Tailwind
+       * classes of the source components (h-14 topbar, w-60 sidebar, aspect-video cards …).
+       */
+      :root {
+        color-scheme: light dark;
+        --radius: 0.75rem;
+        --background: #ffffff;
+        --foreground: #0f0f0f;
+        --secondary: #f2f2f2;
+        --secondary-foreground: #0f0f0f;
+        --muted: #f2f2f2;
+        --muted-foreground: #606060;
+        --accent: #e5e5e5;
+        --accent-foreground: #0f0f0f;
+        --border: #e5e5e5;
+        --input: #e5e5e5;
+        --ring: #ff0000;
+        --yt-red: #ff0000;
+        --yt-badge: rgba(0, 0, 0, 0.8);
+        --hover: rgba(0, 0, 0, 0.05);
+        --badge-bg: rgba(0, 0, 0, 0.8);
+      }
+      .dark {
+        --background: #0f0f0f;
+        --foreground: #f1f1f1;
+        --secondary: #272727;
+        --secondary-foreground: #f1f1f1;
+        --muted: #272727;
+        --muted-foreground: #aaaaaa;
+        --accent: #3f3f3f;
+        --accent-foreground: #f1f1f1;
+        --border: #303030;
+        --input: #303030;
+        --ring: #ff0000;
+        --yt-red: #ff0000;
+        --yt-badge: rgba(0, 0, 0, 0.8);
+        --hover: rgba(255, 255, 255, 0.1);
+        --badge-bg: rgba(0, 0, 0, 0.8);
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+        font-size: 14px;
+        line-height: 1.45;
+        background: var(--background);
+        color: var(--foreground);
+        -webkit-font-smoothing: antialiased;
+      }
+      a { color: inherit; text-decoration: none; }
+      button { font: inherit; color: inherit; background: none; border: none; padding: 0; cursor: pointer; }
+      img { display: block; }
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-thumb { background: var(--secondary); border-radius: 8px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+
+      /* ---------- app shell ---------- */
+      .wf-root { display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
+      .wf-body { display: flex; flex: 1; min-height: 0; }
+      .wf-main { flex: 1; min-width: 0; overflow-y: auto; }
+      .wf-main-col { display: flex; flex-direction: column; min-height: 100%; }
+      .wf-content { flex: 1; }
+
+      /* ---------- topbar (h-14 = 56px) ---------- */
+      .wf-topbar {
+        position: sticky; top: 0; z-index: 40;
+        display: flex; align-items: center; gap: 8px;
+        height: 56px; padding: 0 8px;
+        background: var(--background); flex-shrink: 0;
+      }
+      @media (min-width: 640px) { .wf-topbar { padding: 0 16px; } }
+      .wf-topbar-left { display: flex; align-items: center; gap: 4px; }
+      .wf-logo { display: flex; align-items: center; gap: 4px; padding: 0 4px; user-select: none; cursor: pointer; }
+      .wf-logo-word { font-size: 18px; font-weight: 700; letter-spacing: -0.025em; }
+      .wf-iconbtn {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 40px; height: 40px; border-radius: 9999px; flex-shrink: 0;
+        transition: background 0.15s;
+      }
+      .wf-iconbtn:hover { background: var(--hover); }
+      .wf-search {
+        margin: 0 auto; display: none; width: 100%; max-width: 560px;
+        align-items: center; gap: 8px;
+      }
+      @media (min-width: 640px) { .wf-search { display: flex; } }
+      .wf-search-box {
+        position: relative; display: flex; height: 40px; flex: 1; align-items: center;
+        border-radius: 9999px; border: 1px solid var(--border);
+        background: color-mix(in srgb, var(--secondary) 40%, transparent);
+      }
+      .wf-search-box:focus-within { border-color: color-mix(in srgb, var(--foreground) 40%, transparent); }
+      .wf-search-input {
+        height: 100%; flex: 1; min-width: 0; border: 0; outline: none;
+        background: transparent; padding-left: 16px; font-size: 14px; color: var(--foreground);
+      }
+      .wf-search-input::placeholder { color: var(--muted-foreground); }
+      .wf-search-btn {
+        height: 100%; border-radius: 0 9999px 9999px 0; padding: 0 20px;
+        border-left: 1px solid var(--border); background: var(--secondary);
+        display: inline-flex; align-items: center;
+      }
+      .wf-search-btn:hover { background: var(--accent); }
+      .wf-mic {
+        width: 40px; height: 40px; border-radius: 9999px; flex-shrink: 0;
+        background: color-mix(in srgb, var(--secondary) 60%, transparent);
+        display: inline-flex; align-items: center; justify-content: center;
+      }
+      .wf-mic:hover { background: var(--secondary); }
+      .wf-topbar-right { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+      @media (min-width: 640px) { .wf-topbar-right { gap: 4px; } }
+      /* 源组件 topbar：移动端搜索入口 sm:hidden（桌面端由中央搜索框承担） */
+      .wf-mobile-only { display: inline-flex; }
+      @media (min-width: 640px) { .wf-mobile-only { display: none; } }
+      .wf-suggest {
+        position: absolute; top: 44px; left: 0; right: 0; z-index: 50;
+        border-radius: 12px; border: 1px solid var(--border);
+        background: var(--background); box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+        overflow: hidden; text-align: left;
+      }
+      .wf-suggest-item {
+        display: flex; align-items: center; gap: 10px; width: 100%;
+        padding: 8px 14px; font-size: 14px; text-align: left;
+      }
+      .wf-suggest-item:hover, .wf-suggest-item[data-active="true"] { background: var(--hover); }
+
+      /* ---------- sidebar (w-60 = 240px / rail w-[72px]) ---------- */
+      .wf-sidebar {
+        display: none; flex-shrink: 0; overflow-y: auto;
+        width: 240px; transition: width 0.2s;
+      }
+      @media (min-width: 768px) { .wf-sidebar { display: block; } }
+      .wf-sidebar[data-collapsed="true"] { width: 72px; }
+      .wf-nav { display: flex; flex-direction: column; gap: 2px; padding: 0 8px 16px; }
+      .wf-sidebar[data-collapsed="true"] .wf-nav { align-items: center; padding: 8px 4px; }
+      .wf-navrow {
+        display: flex; align-items: center; gap: 24px; border-radius: 8px;
+        padding: 10px 12px; font-size: 14px; font-weight: 500; line-height: 1;
+        transition: background 0.15s; width: 100%; text-align: left;
+      }
+      .wf-sidebar[data-collapsed="true"] .wf-navrow {
+        flex-direction: column; gap: 4px; padding: 14px 4px;
+        font-size: 10px; line-height: 1.2; align-items: center; text-align: center;
+      }
+      .wf-navrow:hover { background: color-mix(in srgb, var(--accent) 60%, transparent); }
+      .wf-navrow[data-active="true"] { background: var(--secondary); color: var(--foreground); font-weight: 500; }
+      .wf-navrow[data-active="true"] svg { stroke-width: 2.2; }
+      .wf-navrow svg { width: 22px; height: 22px; flex-shrink: 0; stroke-width: 1.8; }
+      .wf-sidebar[data-collapsed="true"] .wf-navrow svg { width: 24px; height: 24px; }
+      .wf-navrow .wf-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .wf-nav-section {
+        padding: 12px 12px 4px; font-size: 11px; font-weight: 600;
+        text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted-foreground);
+      }
+      .wf-sidebar[data-collapsed="true"] .wf-nav-section, .wf-sidebar[data-collapsed="true"] .wf-nav-divider,
+      .wf-sidebar[data-collapsed="true"] .wf-nav-foot, .wf-sidebar[data-collapsed="true"] .wf-nav-subrow { display: none; }
+      .wf-nav-divider { margin: 8px 12px; border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent); }
+      .wf-nav-subrow {
+        display: flex; align-items: center; gap: 24px; border-radius: 8px;
+        padding: 8px 12px; font-size: 14px; color: color-mix(in srgb, var(--foreground) 90%, transparent);
+        transition: background 0.15s; width: 100%; text-align: left;
+      }
+      .wf-nav-subrow:hover { background: color-mix(in srgb, var(--accent) 60%, transparent); }
+      .wf-nav-subrow svg { width: 22px; height: 22px; flex-shrink: 0; stroke-width: 1.8; }
+      .wf-nav-subrow img, .wf-nav-avatar { width: 24px; height: 24px; border-radius: 9999px; flex-shrink: 0; }
+      .wf-nav-foot {
+        display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 8px 12px 0;
+        font-size: 11px; color: var(--muted-foreground);
+      }
+      .wf-nav-copyright { padding: 8px 12px 0; font-size: 11px; color: color-mix(in srgb, var(--muted-foreground) 70%, transparent); }
+
+      /* ---------- category chips ---------- */
+      .wf-chips {
+        display: flex; gap: 12px; overflow-x: auto; padding: 12px 16px;
+        scrollbar-width: none;
+      }
+      /* 源组件：no-scrollbar flex gap-3 overflow-x-auto px-4 py-3 sm:px-6 */
+      @media (min-width: 640px) { .wf-chips { padding-left: 24px; padding-right: 24px; } }
+      .wf-chips::-webkit-scrollbar { display: none; }
+      .wf-chip {
+        flex-shrink: 0; border-radius: 9999px; padding: 6px 14px;
+        font-size: 14px; font-weight: 500; line-height: 1;
+        background: var(--secondary); color: color-mix(in srgb, var(--foreground) 90%, transparent);
+        transition: background 0.15s;
+      }
+      .wf-chip:hover { background: var(--accent); }
+      .wf-chip[data-active="true"] { background: var(--foreground); color: var(--background); }
+
+      /* ---------- video grid + cards ---------- */
+      /* 源组件 recommended-grid：grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ——
+         3 列封顶（operator 指令 "3 fit in one row"），绝不出现第 4 列。 */
+      .wf-grid {
+        display: grid; grid-template-columns: 1fr; column-gap: 16px; row-gap: 36px;
+        padding: 8px 16px 16px;
+      }
+      @media (min-width: 640px) { .wf-grid { padding-left: 24px; padding-right: 24px; grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+      @media (min-width: 1024px) { .wf-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+      /* 频道页例外：源 channel/[handle] 用 gap-y-8 + 2xl:grid-cols-4 */
+      .wf-channel .wf-grid { row-gap: 32px; }
+      @media (min-width: 1536px) { .wf-channel .wf-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+      .wf-card { display: flex; flex-direction: column; }
+      .wf-card-rail { width: 320px; flex-shrink: 0; }
+      @media (min-width: 640px) { .wf-card-rail { width: 360px; } }
+      .wf-thumb {
+        position: relative; display: block; overflow: hidden; border-radius: 12px;
+        background: var(--secondary); aspect-ratio: 16 / 9; width: 100%;
+      }
+      .wf-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+      .wf-duration {
+        position: absolute; bottom: 6px; right: 6px; border-radius: 4px;
+        padding: 2px 6px; font-size: 11px; font-weight: 500; font-variant-numeric: tabular-nums;
+        background: var(--badge-bg); color: #fff;
+      }
+      .wf-livebadge {
+        position: absolute; bottom: 6px; right: 6px; border-radius: 4px;
+        padding: 2px 6px; font-size: 11px; font-weight: 700; text-transform: uppercase;
+        background: var(--yt-red); color: #fff; display: inline-flex; align-items: center; gap: 4px;
+      }
+      .wf-livebadge::before { content: ""; width: 6px; height: 6px; border-radius: 9999px; background: #fff; }
+      .wf-watched {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        background: rgba(0, 0, 0, 0.8); color: #fff;
+        padding: 4px 6px; font-size: 10px; font-weight: 600;
+        text-transform: uppercase; letter-spacing: 0.05em;
+      }
+      .wf-progress { position: absolute; bottom: 0; left: 0; height: 4px; width: 100%; background: rgba(255,255,255,0.3); }
+      .wf-progress-bar { height: 100%; background: var(--yt-red); }
+      .wf-card-meta { display: flex; gap: 12px; margin-top: 12px; }
+      .wf-avatar {
+        width: 36px; height: 36px; border-radius: 9999px; flex-shrink: 0;
+        display: none; align-items: center; justify-content: center;
+        background: var(--secondary); font-size: 14px; font-weight: 600; overflow: hidden;
+      }
+      @media (min-width: 640px) { .wf-avatar { display: inline-flex; } }
+      .wf-card-meta-body { flex: 1; min-width: 0; }
+      .wf-card-title {
+        display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+        overflow: hidden; font-size: 14px; font-weight: 500; line-height: 1.375; cursor: pointer;
+      }
+      .wf-card-channel {
+        display: flex; align-items: center; gap: 4px; width: fit-content; margin-top: 4px;
+        font-size: 13px; color: var(--muted-foreground);
+      }
+      .wf-card-channel:hover { color: var(--foreground); }
+      .wf-card-views { font-size: 13px; color: var(--muted-foreground); }
+      .wf-verified { display: inline-flex; color: var(--muted-foreground); margin-left: 2px; }
+
+      /* ---------- shelf scroller + shorts shelf ---------- */
+      /* 源组件 shorts-shelf：mt-2 + h2 px-4 text-lg sm:px-6 sm:text-xl（SquarePlay size-6 红）；
+         shelf-scroller 行：mt-3 gap-4 px-4 pb-2 sm:px-6 */
+      .wf-shelf { margin-top: 8px; }
+      .wf-shelf-title {
+        display: flex; align-items: center; gap: 8px; padding: 0 16px;
+        font-size: 18px; font-weight: 600;
+      }
+      @media (min-width: 640px) { .wf-shelf-title { padding-left: 24px; padding-right: 24px; font-size: 20px; } }
+      .wf-shelf-title svg { width: 24px; height: 24px; color: var(--yt-red); stroke-width: 2.2; }
+      .wf-shelf-row { display: flex; gap: 16px; overflow-x: auto; padding: 12px 16px 8px; scrollbar-width: none; }
+      .wf-shelf-row::-webkit-scrollbar { display: none; }
+      @media (min-width: 640px) { .wf-shelf-row { padding-left: 24px; padding-right: 24px; } }
+      .wf-shortstile {
+        display: flex; flex-direction: column; gap: 8px; width: 168px; flex-shrink: 0; cursor: pointer;
+      }
+      @media (min-width: 640px) { .wf-shortstile { width: 192px; } }
+      @media (min-width: 1024px) { .wf-shortstile { width: 234px; } }
+      @media (min-width: 1280px) { .wf-shortstile { width: 264px; } }
+      @media (min-width: 1536px) { .wf-shortstile { width: 296px; } }
+      .wf-shortstile .wf-thumb { aspect-ratio: 9 / 16; border-radius: 12px; }
+      .wf-shortstile img { transition: transform 0.2s; }
+      .wf-shortstile:hover img { transform: scale(1.05); }
+      .wf-shortstile-title {
+        display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+        overflow: hidden; font-size: 14px; font-weight: 500; line-height: 1.375;
+      }
+      .wf-shortstile-views { font-size: 13px; color: var(--muted-foreground); margin-top: -4px; }
+
+      /* ---------- continue rail ---------- */
+      /* 源组件 video-rail：section mt-8；h2 px-4 sm:px-6 text-lg sm:text-xl（Clock size-5 muted）
+         + "History →" more 链接；行 mt-3 gap-4 px-4 pb-2 sm:px-6 */
+      .wf-rail { margin-top: 32px; }
+      .wf-rail-head { display: flex; align-items: center; justify-content: space-between; padding: 0 16px; }
+      @media (min-width: 640px) { .wf-rail-head { padding-left: 24px; padding-right: 24px; } }
+      .wf-rail-title { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; }
+      @media (min-width: 640px) { .wf-rail-title { font-size: 20px; } }
+      .wf-rail-title svg { width: 20px; height: 20px; color: var(--muted-foreground); }
+      .wf-rail-more { display: flex; align-items: center; gap: 2px; font-size: 14px; color: var(--muted-foreground); }
+      .wf-rail-more:hover { color: var(--foreground); }
+
+      /* ---------- footer ---------- */
+      .wf-footer {
+        margin-top: auto; border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+        padding: 16px 16px 16px; color: var(--muted-foreground);
+      }
+      @media (min-width: 640px) { .wf-footer { padding-left: 24px; padding-right: 24px; } }
+      .wf-footer-brand { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; font-size: 14px; }
+      .wf-footer-brand strong { font-weight: 500; color: color-mix(in srgb, var(--foreground) 80%, transparent); }
+      .wf-footer-links { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 12px; font-size: 13px; }
+      .wf-footer-links a:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: 2px; }
+      .wf-footer-copy { margin-top: 12px; font-size: 12px; color: color-mix(in srgb, var(--muted-foreground) 70%, transparent); }
+
+      /* ---------- watch page ---------- */
+      /* 源组件 watch-page：main max-w-[1754px] px-0 sm:px-4 sm:pb-8；
+         双栏 grid gap-6 px-4 pt-4 lg:grid-cols-[minmax(0,1fr)_402px]（桌面侧边 32px 总内边距） */
+      .wf-watch { display: flex; flex-direction: column; gap: 24px; padding: 16px 32px 32px; max-width: 1754px; margin: 0 auto; }
+      @media (min-width: 1024px) { .wf-watch { flex-direction: row; } }
+      .wf-watch-primary { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+      .wf-watch-rail { display: flex; flex-direction: column; gap: 8px; }
+      @media (min-width: 1024px) { .wf-watch-rail { width: 402px; flex-shrink: 0; } }
+      .wf-player { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #000; }
+      .wf-player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+      .wf-watch-title { font-size: 20px; font-weight: 600; line-height: 1.3; margin: 0; }
+      @media (min-width: 640px) { .wf-watch-title { font-size: 22px; } }
+      .wf-watch-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+      .wf-watch-channel { display: flex; align-items: center; gap: 12px; margin-right: auto; min-width: 0; }
+      .wf-watch-channel .wf-avatar { display: inline-flex; width: 40px; height: 40px; }
+      .wf-watch-channel-name { font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 4px; }
+      .wf-watch-channel-subs { font-size: 12px; color: var(--muted-foreground); }
+      .wf-btn {
+        display: inline-flex; align-items: center; gap: 6px; border-radius: 9999px;
+        padding: 8px 14px; font-size: 14px; font-weight: 500;
+        background: var(--secondary); color: var(--foreground); transition: background 0.15s;
+        white-space: nowrap;
+      }
+      .wf-btn:hover { background: var(--accent); }
+      .wf-btn-primary { background: var(--yt-red); color: #fff; }
+      .wf-btn-primary:hover { background: #cc0000; }
+      .wf-btn-ghost { background: transparent; }
+      .wf-btn-ghost:hover { background: var(--hover); }
+      .wf-btn svg { width: 18px; height: 18px; stroke-width: 2; }
+      .wf-likes { display: inline-flex; border-radius: 9999px; background: var(--secondary); overflow: hidden; }
+      .wf-likes > button { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 14px; font-weight: 500; }
+      .wf-likes > button:hover { background: var(--accent); }
+      .wf-likes .wf-likes-sep { width: 1px; background: color-mix(in srgb, var(--foreground) 20%, transparent); }
+      .wf-desc {
+        border-radius: 12px; background: var(--secondary); padding: 12px;
+        font-size: 14px; line-height: 1.5;
+      }
+      .wf-desc-meta { font-weight: 500; }
+      .wf-desc-text { margin: 8px 0 0; white-space: pre-line; overflow: hidden; }
+      .wf-desc[data-expanded="false"] .wf-desc-text { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+      .wf-desc-more { margin-top: 6px; font-weight: 500; border-radius: 4px; }
+      .wf-comments { display: flex; flex-direction: column; gap: 16px; }
+      .wf-comments-count { font-size: 16px; font-weight: 600; }
+      .wf-comment { display: flex; gap: 12px; }
+      .wf-comment-body { min-width: 0; }
+      .wf-comment-head { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted-foreground); }
+      .wf-comment-author { font-weight: 500; color: var(--foreground); }
+      .wf-comment-text { margin: 2px 0 0; font-size: 14px; }
+      .wf-comment-actions { display: flex; align-items: center; gap: 12px; margin-top: 6px; font-size: 12px; color: var(--muted-foreground); }
+      .wf-comment-actions button { display: inline-flex; align-items: center; gap: 4px; }
+      .wf-comment-actions button:hover { color: var(--foreground); }
+      .wf-comment-actions svg { width: 14px; height: 14px; }
+      .wf-pin { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted-foreground); }
+      /* 源组件 related-rail：卡片 flex gap-2 rounded-lg p-1 hover:bg-secondary/40；缩略图 w-40 rounded-md */
+      .wf-related-card { display: flex; gap: 8px; padding: 4px; border-radius: 8px; cursor: pointer; }
+      .wf-related-card:hover { background: color-mix(in srgb, var(--secondary) 40%, transparent); }
+      .wf-related-card .wf-thumb { width: 160px; flex-shrink: 0; border-radius: 6px; }
+      .wf-related-body { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+      .wf-related-title {
+        display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+        font-size: 14px; font-weight: 500; line-height: 1.375;
+      }
+      .wf-related-meta { font-size: 12px; color: var(--muted-foreground); }
+
+      /* ---------- search results ---------- */
+      .wf-searchpage { display: flex; flex-direction: column; gap: 24px; padding: 16px; max-width: 1096px; margin: 0 auto; }
+      .wf-result { display: flex; flex-direction: column; gap: 12px; }
+      @media (min-width: 640px) { .wf-result { flex-direction: row; } }
+      .wf-result .wf-thumb { width: 100%; }
+      @media (min-width: 640px) { .wf-result .wf-thumb { width: 360px; flex-shrink: 0; } }
+      .wf-channel-result {
+        display: flex; align-items: center; gap: 16px; padding: 8px 0;
+        border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+      }
+      .wf-channel-result .wf-avatar { display: inline-flex; width: 88px; height: 88px; font-size: 32px; }
+      .wf-filters {
+        display: flex; align-items: center; gap: 8px; justify-content: center;
+        border-bottom: 1px solid var(--border); padding-bottom: 12px; font-size: 14px; font-weight: 500;
+      }
+      .wf-filters svg { width: 18px; height: 18px; }
+
+      /* ---------- shorts page ---------- */
+      /* 源组件 shorts-feed-shell + shorts-feed：snap-y snap-mandatory 纵向流，
+         每张幻灯 h-full max-w-[480px] mx-auto snap-start；播放列 aspect-[9/16] h-full w-auto rounded-2xl；
+         动作栏 absolute bottom-16 right-3 叠在播放列内（RailAction h-12 w-12 bg-black/30 backdrop-blur）；
+         底部渐变信息层 from-black/70 via-black/25 */
+      .wf-shortspage {
+        height: calc(100dvh - 56px);
+        overflow-y: auto; scroll-snap-type: y mandatory; overscroll-behavior: contain;
+      }
+      .wf-shortspage::-webkit-scrollbar { width: 8px; }
+      .wf-short-item {
+        position: relative; height: 100%; width: 100%; max-width: 480px; margin: 0 auto;
+        display: flex; align-items: center; justify-content: center;
+        scroll-snap-align: start; scroll-snap-stop: always;
+      }
+      .wf-short-playercol {
+        position: relative; aspect-ratio: 9 / 16; height: 100%; width: auto; max-width: 100%;
+        border-radius: 16px; overflow: hidden; background: #000;
+      }
+      .wf-short-playercol iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+      .wf-short-overlay {
+        position: absolute; left: 0; right: 0; bottom: 0; z-index: 10; pointer-events: none;
+        background: linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.25) 50%, transparent);
+        padding: 16px; padding-top: 56px;
+      }
+      .wf-short-overlay-channel {
+        display: flex; width: fit-content; align-items: center; gap: 8px; border-radius: 9999px;
+        pointer-events: auto; cursor: pointer;
+      }
+      .wf-short-overlay-channel:hover { opacity: 0.8; }
+      .wf-short-overlay-channel .wf-avatar {
+        display: inline-flex; width: 32px; height: 32px; background: rgba(255,255,255,0.1);
+      }
+      .wf-short-overlay-channel-name { font-size: 14px; font-weight: 600; color: #fff; }
+      .wf-short-overlay-title {
+        margin: 8px 0 0; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.9);
+        display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+      }
+      .wf-short-overlay-views { margin: 4px 0 0; font-size: 12px; color: rgba(255,255,255,0.7); }
+      .wf-short-rail {
+        position: absolute; bottom: 64px; right: 12px; z-index: 20;
+        display: flex; flex-direction: column; align-items: center; gap: 8px;
+      }
+      .wf-rail-action { display: flex; flex-direction: column; align-items: center; }
+      .wf-rail-action button {
+        display: flex; width: 48px; height: 48px; align-items: center; justify-content: center;
+        border-radius: 9999px; background: rgba(0,0,0,0.3); color: #fff;
+        backdrop-filter: blur(4px); transition: transform 0.15s;
+      }
+      .wf-rail-action button:hover { transform: scale(1.05); }
+      .wf-rail-action svg { width: 24px; height: 24px; }
+      .wf-rail-action-label {
+        margin-top: 4px; height: 18px; width: 48px; font-size: 12px; line-height: 18px;
+        text-align: center; color: rgba(255,255,255,0.9);
+      }
+
+      /* ---------- trending ---------- */
+      /* 源组件 trending/view：全宽容器（无 max-width），行内 px-4 sm:px-6 */
+      .wf-trending { padding: 16px; margin: 0 auto; }
+      .wf-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; scrollbar-width: none; }
+      .wf-tabs::-webkit-scrollbar { display: none; }
+      .wf-trend-row { display: flex; gap: 16px; align-items: center; padding: 8px 0; border-bottom: 1px solid color-mix(in srgb, var(--border) 50%, transparent); }
+      /* 源组件 trending/view：rank w-8 text-xl font-semibold tabular-nums；缩略图 w-[140px] sm:w-[240px] */
+      .wf-trend-rank { width: 32px; text-align: center; font-size: 20px; font-weight: 600; color: var(--muted-foreground); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+      .wf-trend-row .wf-thumb { width: 240px; flex-shrink: 0; }
+      .wf-trend-body { min-width: 0; }
+
+      /* ---------- channel page ---------- */
+      /* 源组件 channel/[handle]：banner 全幅 h-28 sm:h-36 lg:h-44 bg-secondary（无圆角、无外边距）；
+         内容区 px-4 sm:px-6 */
+      .wf-channel { padding: 0 0 16px; max-width: 1754px; margin: 0 auto; }
+      .wf-channel-banner {
+        height: 112px; width: 100%; background: var(--secondary);
+      }
+      @media (min-width: 640px) { .wf-channel-banner { height: 144px; } }
+      @media (min-width: 1024px) { .wf-channel-banner { height: 176px; } }
+      .wf-channel-head { display: flex; gap: 16px; align-items: center; padding: 16px 16px 0; }
+      @media (min-width: 640px) { .wf-channel-head { padding-left: 24px; padding-right: 24px; } }
+      .wf-channel-head .wf-avatar { display: inline-flex; width: 80px; height: 80px; font-size: 30px; }
+      @media (min-width: 640px) { .wf-channel-head .wf-avatar { width: 128px; height: 128px; font-size: 48px; } }
+      .wf-channel-name { font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+      @media (min-width: 640px) { .wf-channel-name { font-size: 24px; } }
+      .wf-channel-meta { font-size: 13px; color: var(--muted-foreground); }
+      .wf-channel-tabs { display: flex; gap: 8px; margin: 16px 0; padding: 0 16px; border-bottom: 1px solid var(--border); }
+      @media (min-width: 640px) { .wf-channel-tabs { padding-left: 24px; padding-right: 24px; } }
+      .wf-channel-tab { padding: 10px 4px; font-size: 14px; font-weight: 500; color: var(--muted-foreground); border-bottom: 2px solid transparent; }
+      .wf-channel-tab[data-active="true"] { color: var(--foreground); border-bottom-color: var(--foreground); }
+
+      /* ---------- misc ---------- */
+      .wf-empty { padding: 64px 16px; text-align: center; }
+      .wf-empty-title { font-size: 18px; font-weight: 500; }
+      .wf-empty-body { margin-top: 4px; font-size: 14px; color: var(--muted-foreground); }
+      .wf-skeleton { border-radius: 12px; background: var(--secondary); animation: wf-pulse 1.5s ease-in-out infinite; }
+      @keyframes wf-pulse { 50% { opacity: 0.6; } }
+      .wf-loading { padding: 32px; text-align: center; color: var(--muted-foreground); }
+      .wf-error-box { margin: 32px 16px; border-radius: 12px; border: 1px solid var(--border); padding: 24px; text-align: center; }
+      .wf-toast {
+        position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 60;
+        border-radius: 8px; background: var(--foreground); color: var(--background);
+        padding: 10px 16px; font-size: 13px; font-weight: 500; box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      }
+      .wf-page-title { padding: 16px 16px 0; font-size: 20px; font-weight: 600; }
+      .wf-spacer-4 { margin-top: 16px; }
+      .wf-hidden { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div class="wf-loading">Loading WebFlix…</div>
+    </div>
+    <script>
+      /*__SCRIPT__*/
+    </script>
+  </body>
+</html>

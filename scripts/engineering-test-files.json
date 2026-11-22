@@ -1,6 +1,8 @@
 [
   ".agents/skills/zcode-large-task-fixture/scripts/generate-large-task-fixture.test.mjs",
   "packages/desktop/scripts/gen-ui-runtime-assets.test.ts",
+  "apps/zcode-cli/packages/webflix-plugin/src/contract.test.ts",
+  "apps/zcode-cli/packages/webflix-plugin/src/server/server.test.ts",
   "packages/desktop/test/app-asar-repack.test.ts",
   "packages/desktop/test/build-native-search-tools.test.ts",
   "packages/desktop/test/bundleMirrorFallback.test.ts",

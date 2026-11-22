@@ -1337,6 +1337,19 @@ modules:
       app: .
     owner: plugin
 
+  # webflix-panel：webflix 插件自带的 WebFlix 视频工作区面板（MCP server + 页面），由 architecture:adopt 登记
+  - id: webflix-panel
+    roots:
+      - apps/zcode-cli/packages/webflix-plugin/src
+    managed: true
+    requires: []
+    publicEntrypoints:
+      - apps/zcode-cli/packages/webflix-plugin/src/index.ts
+      - apps/zcode-cli/packages/webflix-plugin/src/contract.ts
+    layers:
+      app: .
+    owner: plugin
+
   # file-open-apps：由 architecture:adopt 登记
   - id: file-open-apps
     roots:

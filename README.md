@@ -13,8 +13,13 @@
 
 ZCode 是 AI 编程工作台，提供桌面应用、浏览器界面和终端 Agent。本仓库包含客户端、后端服务、共享 UI，以及 Agent CLI 与运行时源码。
 
+## WebFlix 视频工作区（本仓库新增）
+
+本仓库在 [zai-org/zcode](https://github.com/zai-org/ZCode) v3.18.2 的基础上叠加了 **WebFlix 工作区插件**（对齐 payswap-4.0 的「叠加不改主应用」模式：主应用内容零删改）：把 [payswapdotorg/webflix-2.0](https://github.com/payswapdotorg/webflix-2.0) 的 YouTube-clone 界面渲染成 ZCode 会话侧栏面板 —— 首页信息流、Shorts、搜索、观看页、Trending 与频道页。详见 [docs/webflix/webflix-workspace.md](docs/webflix/webflix-workspace.md) 与插件包 [apps/zcode-cli/packages/webflix-plugin/](apps/zcode-cli/packages/webflix-plugin/)。
+
 ## 更新
 
+- **2026-11-23**：新增 WebFlix 视频工作区插件（`webflix` 官方 UI 插件，默认开启）。
 - **2026-11-12**：更新至 ZCode v3.18.2 版本。
 - 2026-11-12：更新至 ZCode v3.18.1 版本。
 - 2026-11-11：更新至 ZCode v3.18.0 版本。

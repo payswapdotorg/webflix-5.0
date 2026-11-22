@@ -528,6 +528,33 @@ export const OFFICIAL_PLUGIN_DEFINITIONS: readonly OfficialPluginDefinition[] = 
     ],
     version: "0.5.0",
   },
+  {
+    // WebFlix 视频工作区（docs/webflix/webflix-workspace.md）：把 WebFlix 2.0 的
+    // YouTube-clone 界面渲染成会话侧栏面板。MCP server 与面板页面由插件自己的
+    // build 脚本构建进 dist/；工具 app-only（模型工具表不进，面板经 callServerTool 调用）。
+    componentTypes: ["ui"],
+    name: "webflix",
+    defaultEnabled: true,
+    listing: {
+      author: { name: "WebFlix", url: "https://github.com/payswapdotorg/webflix-2.0" },
+      category: "productivity",
+      displayName: "WebFlix",
+      displayName_i18n: { "zh-CN": "WebFlix 视频工作区" },
+      description_i18n: {
+        "zh-CN":
+          "WebFlix（YouTube-clone）界面工作区：首页信息流、Shorts、搜索、观看页与频道页，数据来自已校验快照。",
+      },
+    },
+    rootCandidates: [
+      "packages/webflix-plugin",
+      "../webflix-plugin",
+      "../../webflix-plugin",
+      "../../../webflix-plugin",
+    ],
+    // 缺了会 seed 出能看到面板入口却启动不了 MCP server 的残缺插件。
+    requiredSeedPaths: [".zcode-plugin/plugin.json", "dist/server.mjs", "dist/ui/panel.html"],
+    version: "0.1.0",
+  },
 ];
 
 // 在 official plugin 定义里标了 defaultEnabled: true 的, 拼成 `<name>@<marketplace>` 形式,

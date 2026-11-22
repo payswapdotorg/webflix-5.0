@@ -259,6 +259,16 @@ const officialPluginPackages = [
     stagedPath: "packages/zcode-site-plugin",
   },
   {
+    // WebFlix 视频工作区（默认开启）。漏 stage 会让生产桌面包里找不到它；WebFlix 面板的
+    // MCP server 与页面由插件自己的 build 脚本构建进 dist/。
+    packageName: "@zcode/webflix-plugin",
+    relativePath: "apps/zcode-cli/packages/webflix-plugin",
+    requiresRuntime: true,
+    requiredRuntimePaths: ["dist/server.mjs", "dist/ui/panel.html"],
+    runtimeBuildScript: "scripts/build.mjs",
+    stagedPath: "packages/webflix-plugin",
+  },
+  {
     // node_repl 宿主：Browser Use 与 Computer Use 共用的 MCP runtime，本轮抽成独立包。
     // 它没有 listing（不进插件市场展示面），但生产包首启 seed 必须拿到它的 dist runtime，
     // 否则 bua/cua 任一开启时都会连不上 node_repl。

@@ -13,8 +13,13 @@
 
 ZCode is an AI coding workspace with desktop, browser, and terminal interfaces. This repository contains the clients, backend services, shared UI, and Agent CLI and runtime source code.
 
+## WebFlix Video Workspace (added in this repo)
+
+This repo layers the **WebFlix workspace plugin** on top of [zai-org/zcode](https://github.com/zai-org/ZCode) v3.18.2 — following payswap-4.0's additive pattern (nothing removed from the main app). It renders the [payswapdotorg/webflix-2.0](https://github.com/payswapdotorg/webflix-2.0) YouTube-clone interface as a ZCode session side-pane: home feed, Shorts, search, watch pages, trending and channels. See [docs/webflix/webflix-workspace.md](docs/webflix/webflix-workspace.md) and the plugin package [apps/zcode-cli/packages/webflix-plugin/](apps/zcode-cli/packages/webflix-plugin/).
+
 ## Updates
 
+- **2026-11-23**: Added the WebFlix video workspace plugin (`webflix` official UI plugin, enabled by default).
 - **2026-11-12**: Updated to ZCode v3.18.2.
 - 2026-11-12: Updated to ZCode v3.18.1.
 - 2026-11-11: Updated to ZCode v3.18.0.

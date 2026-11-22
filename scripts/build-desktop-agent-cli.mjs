@@ -84,6 +84,8 @@ const requiredDevPluginRuntimeBuilds = [
   })),
   // Sites 面板的 MCP server 由插件自己构建；不构建时面板入口可见但 MCP 启动失败。
   { packageName: "@zcode/zcode-site-plugin", artifactPath: "zcode-site-plugin/dist/server.mjs" },
+  // WebFlix 面板同理：dev agent 需要自带已构建的官方插件 runtime，否则只有残缺种子。
+  { packageName: "@zcode/webflix-plugin", artifactPath: "webflix-plugin/dist/server.mjs" },
 ];
 const defaultBuildFilters = [
   ...cliWorkspaceBuilds.map(({ packageName }) => packageName),
