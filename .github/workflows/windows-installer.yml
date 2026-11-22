@@ -22,7 +22,9 @@ concurrency:
 jobs:
   build:
     name: Build and publish Windows x64 installer
-    runs-on: windows-latest
+    # 固定 windows-2022 镜像：windows-latest（2025+）只带 VS 2026，
+    # 而 scripts/build-windows-runtime-host.mjs 硬编码 CMake "Visual Studio 17 2022" 生成器。
+    runs-on: windows-2022
     timeout-minutes: 240
     steps:
       - name: Checkout
